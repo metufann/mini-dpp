@@ -1,0 +1,32 @@
+namespace MiniDpp.Tests;
+
+public static class TestFiles
+{
+    public const string SampleCsvContent = """
+        gtin,model_adi,batch_no,elyaf_pamuk_yuzde,elyaf_elastan_yuzde,uretim_yeri,karbon_kg_co2e
+        08690000000012,Slim Denim 501,B2027-01,98,2,Denizli,12.4
+        08690000000029,Regular Denim 502,B2027-02,99,1,Denizli,11.8
+        ,Wide Leg Denim 503,B2027-03,100,0,Bursa,13.1
+        08690000000043,Skinny Denim 504,B2027-04,95,3,Denizli,12.9
+        08690000000050,Mom Jean 505,B2027-05,97,3,Bursa,12.2
+        """;
+
+    private static string? _tempCsvPath;
+    private static readonly object _lock = new();
+
+    public static string SampleCsvPath()
+    {
+        lock (_lock)
+        {
+            if (_tempCsvPath is not null && File.Exists(_tempCsvPath))
+            {
+                return _tempCsvPath;
+            }
+
+            var path = Path.Combine(Path.GetTempPath(), $"minidpp-test-{Guid.NewGuid():N}.csv");
+            File.WriteAllText(path, SampleCsvContent);
+            _tempCsvPath = path;
+            return _tempCsvPath;
+        }
+    }
+}

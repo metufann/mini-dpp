@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/MiniDpp.Api/MiniDpp.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MiniDpp.Tests/MiniDpp.Tests.csproj" />
+  </Folder>
+</Solution>
