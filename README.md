@@ -13,6 +13,7 @@ dotnet run --launch-profile http
 
 # Frontend (http://localhost:5173)
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
