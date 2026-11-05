@@ -6,6 +6,20 @@ export interface ProductDto {
   cottonPercentage: number;
   elastanePercentage: number;
   carbonKgCO2e: number;
+  version: number;
+  updatedAt: string;
+}
+
+export interface ProductVersionDto {
+  version: number;
+  isCurrent: boolean;
+  modelName: string;
+  batchNumber: string;
+  productionPlace: string;
+  cottonPercentage: number;
+  elastanePercentage: number;
+  carbonKgCO2e: number;
+  recordedAt: string;
 }
 
 export interface ImportRowErrorDto {
@@ -16,6 +30,9 @@ export interface ImportRowErrorDto {
 export interface ImportResultDto {
   totalRows: number;
   savedRows: number;
+  createdRows?: number;
+  updatedRows?: number;
+  unchangedRows?: number;
   failedRows: number;
   errors: ImportRowErrorDto[];
 }

@@ -166,6 +166,7 @@ export function ProductListSection({
             <thead>
               <tr className="border-b border-neutral-200 text-neutral-400">
                 <th className="pb-2 font-medium">GTIN</th>
+                <th className="pb-2 font-medium">Ver</th>
                 <th className="pb-2 font-medium">Model</th>
                 <th className="pb-2 font-medium">Batch</th>
                 <th className="pb-2 font-medium">Origin</th>
@@ -194,6 +195,11 @@ export function ProductListSection({
                   >
                     <td className="py-2.5 pr-3 font-mono font-medium text-neutral-900">
                       {p.gtin}
+                    </td>
+                    <td className="py-2.5 pr-3 font-mono text-[11px] text-neutral-500">
+                      <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-medium">
+                        v{p.version ?? 1}
+                      </span>
                     </td>
                     <td className="py-2.5 pr-3 text-neutral-800">
                       {p.modelName}

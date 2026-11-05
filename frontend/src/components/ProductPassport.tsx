@@ -4,6 +4,7 @@ import type { ProductDto } from "../types/product";
 import { formatDecimal } from "../lib/format";
 import { getHtmlDppUrl, getJsonLdUrl, getQrCodeUrl } from "../api/products";
 import { useDeleteProduct } from "../hooks/useProducts";
+import { VersionHistory } from "./VersionHistory";
 
 interface ProductPassportProps {
   product: ProductDto;
@@ -51,6 +52,9 @@ export function ProductPassport({
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
               Digital Product Passport
+            </span>
+            <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-neutral-700">
+              v{product.version ?? 1}
             </span>
             {authorised && (
               <span className="inline-flex items-center gap-1 rounded bg-neutral-900 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -291,6 +295,15 @@ export function ProductPassport({
             </a>
           </div>
         </aside>
+      </div>
+
+      {/* Version History Section */}
+      <div className="mt-8 border-t border-neutral-100 pt-6">
+        <VersionHistory
+          gtin={product.gtin}
+          currentVersion={product.version ?? 1}
+          authorised={authorised}
+        />
       </div>
     </article>
   );

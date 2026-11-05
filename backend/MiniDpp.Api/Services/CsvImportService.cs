@@ -54,13 +54,16 @@ public class CsvImportService(AppDbContext db, ProductRowValidator rowValidator)
         ValidateHeaders(csv.Headers);
 
         var seenGtins = new HashSet<string>(StringComparer.Ordinal);
-        var existingGtins = (await db.Products.Select(product => product.Gtin).ToListAsync(cancellationToken))
-            .ToHashSet(StringComparer.Ordinal);
         var modelsByName = await db.ProductModels.ToDictionaryAsync(
             model => model.Name,
             StringComparer.OrdinalIgnoreCase,
             cancellationToken);
         var batches = await db.Batches.ToListAsync(cancellationToken);
+        var existingProducts = await db.Products
+            .Include(product => product.Batch)
+            .ThenInclude(batch => batch.ProductModel)
+            .ToDictionaryAsync(product => product.Gtin, StringComparer.Ordinal, cancellationToken);
+        var now = DateTime.UtcNow;
 
         while (await csv.ReadAsync(cancellationToken))
         {
@@ -85,32 +88,67 @@ public class CsvImportService(AppDbContext db, ProductRowValidator rowValidator)
                 continue;
             }
 
-            if (!seenGtins.Add(validated.Gtin) || existingGtins.Contains(validated.Gtin))
+            if (!seenGtins.Add(validated.Gtin))
             {
-                AddError(result, lineNumber, "A product with this GTIN already exists.");
+                AddError(result, lineNumber, "This GTIN appears more than once in the file.");
                 continue;
             }
 
             var model = GetOrCreateModel(modelsByName, validated.ModelName);
             var batch = GetOrCreateBatch(batches, model, validated.BatchNumber, validated.ProductionPlace);
 
-            db.Products.Add(new Product
+            if (!existingProducts.TryGetValue(validated.Gtin, out var existing))
             {
-                Gtin = validated.Gtin,
-                Batch = batch,
-                CottonPercentage = validated.CottonPercentage,
-                ElastanePercentage = validated.ElastanePercentage,
-                CarbonKgCO2e = validated.CarbonKgCO2e
-            });
+                var product = new Product
+                {
+                    Gtin = validated.Gtin,
+                    Batch = batch,
+                    CottonPercentage = validated.CottonPercentage,
+                    ElastanePercentage = validated.ElastanePercentage,
+                    CarbonKgCO2e = validated.CarbonKgCO2e,
+                    Version = 1,
+                    UpdatedAt = now
+                };
+                db.Products.Add(product);
+                existingProducts[product.Gtin] = product;
+                result.CreatedRows++;
+            }
+            else if (HasChanges(existing, batch, validated))
+            {
+                db.ProductVersions.Add(ProductVersion.SnapshotOf(existing));
 
-            existingGtins.Add(validated.Gtin);
-            result.SavedRows++;
+                if (!string.Equals(batch.ProductionPlace, validated.ProductionPlace, StringComparison.OrdinalIgnoreCase))
+                {
+                    batch.ProductionPlace = validated.ProductionPlace;
+                }
+
+                existing.Batch = batch;
+                existing.CottonPercentage = validated.CottonPercentage;
+                existing.ElastanePercentage = validated.ElastanePercentage;
+                existing.CarbonKgCO2e = validated.CarbonKgCO2e;
+                existing.Version++;
+                existing.UpdatedAt = now;
+                result.UpdatedRows++;
+            }
+            else
+            {
+                AddError(result, lineNumber, "A product with this GTIN already exists.");
+                result.UnchangedRows++;
+            }
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        result.SavedRows = result.CreatedRows + result.UpdatedRows;
         result.FailedRows = result.Errors.Count;
         return result;
     }
+
+    private static bool HasChanges(Product product, Batch batch, ValidatedProductRow row) =>
+        !ReferenceEquals(product.Batch, batch)
+        || !string.Equals(batch.ProductionPlace, row.ProductionPlace, StringComparison.OrdinalIgnoreCase)
+        || product.CottonPercentage != row.CottonPercentage
+        || product.ElastanePercentage != row.ElastanePercentage
+        || product.CarbonKgCO2e != row.CarbonKgCO2e;
 
     private static CsvProductRow ReadRow(CsvReader csv) => new()
     {

@@ -28,6 +28,18 @@ public class ProductsController(
         return Ok(product);
     }
 
+    [HttpGet("{gtin}/versions")]
+    public async Task<ActionResult<IReadOnlyList<ProductVersionDto>>> Versions(string gtin, CancellationToken cancellationToken)
+    {
+        var history = await products.GetHistoryAsync(gtin, cancellationToken);
+        if (history is null)
+        {
+            return NotFound(new { message = "Product not found." });
+        }
+
+        return Ok(history);
+    }
+
     [HttpDelete("{gtin}")]
     public async Task<IActionResult> Delete(string gtin, CancellationToken cancellationToken)
     {

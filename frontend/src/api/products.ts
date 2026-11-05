@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../lib/constants";
-import type { ImportResultDto, ProductDto } from "../types/product";
+import type { ImportResultDto, ProductDto, ProductVersionDto } from "../types/product";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -42,6 +42,27 @@ export async function fetchProduct(gtin: string): Promise<ProductDto> {
     );
   }
   return response.json() as Promise<ProductDto>;
+}
+
+/**
+ * Fetch version history for a product.
+ */
+export async function fetchProductVersions(
+  gtin: string,
+): Promise<ProductVersionDto[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/products/${encodeURIComponent(gtin)}/versions`,
+  );
+  if (response.status === 404) {
+    throw new ApiError(404, "Product not found.");
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      `Failed to load version history (${response.status}).`,
+    );
+  }
+  return response.json() as Promise<ProductVersionDto[]>;
 }
 
 /**

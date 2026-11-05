@@ -284,6 +284,27 @@ export function CsvUploadSection({ onImportSuccess }: CsvUploadSectionProps) {
             </div>
           </div>
 
+          {/* Sub-breakdown: Created vs Updated */}
+          {(importResult.createdRows !== undefined || importResult.updatedRows !== undefined) && (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-[11px] text-neutral-600">
+              {importResult.createdRows !== undefined && (
+                <span>
+                  New: <strong className="font-mono text-neutral-900">{importResult.createdRows}</strong>
+                </span>
+              )}
+              {importResult.updatedRows !== undefined && (
+                <span>
+                  Updated: <strong className="font-mono text-neutral-900">{importResult.updatedRows}</strong>
+                </span>
+              )}
+              {importResult.unchangedRows !== undefined && importResult.unchangedRows > 0 && (
+                <span className="text-neutral-400">
+                  Unchanged: <strong className="font-mono">{importResult.unchangedRows}</strong>
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Partial success notice */}
           {importResult.savedRows > 0 && importResult.failedRows > 0 && (
             <p className="mt-2.5 text-xs text-neutral-600">

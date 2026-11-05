@@ -3,6 +3,7 @@ import {
   deleteProduct,
   fetchProduct,
   fetchProducts,
+  fetchProductVersions,
   uploadCsv,
 } from "../api/products";
 
@@ -27,15 +28,28 @@ export function useProduct(gtin: string | null, enabled = true) {
   });
 }
 
+export function useProductVersions(gtin: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["product-versions", gtin],
+    queryFn: () =>
+      gtin
+        ? fetchProductVersions(gtin)
+        : Promise.reject(new Error("No GTIN provided")),
+    enabled: Boolean(enabled && gtin && gtin.trim().length > 0),
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useImportCsv() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (file: File) => uploadCsv(file),
     onSuccess: () => {
-      // Refresh the product listing after a successful import
+      // Refresh the product listing and details after an import
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["product"] });
+      void queryClient.invalidateQueries({ queryKey: ["product-versions"] });
     },
   });
 }
@@ -49,6 +63,7 @@ export function useDeleteProduct() {
       // Refresh the product listing after a deletion
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["product"] });
+      void queryClient.invalidateQueries({ queryKey: ["product-versions"] });
     },
   });
 }
